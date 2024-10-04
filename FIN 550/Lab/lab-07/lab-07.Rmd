@@ -1,0 +1,110 @@
+---
+title: "Lab 07 - Linear Regression"
+author: Ives He
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: simplex
+    number_sections: false
+---
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+## 0 load the package and suppress scientific notation 
+```{r}
+# load packages 
+library(tidyverse)
+# not display scientific notation
+options(scipen = 999)
+```
+
+## 1 create a data frame 
+
+```{r}
+# Load the data
+data <- read.csv("/Users/iveshe/Library/Mobile Documents/com~apple~CloudDocs/Term 1/FIN 550/Lab/lab-07/ameshousing.csv")
+
+# Display the first six rows
+head(data)
+
+# Display column names
+colnames(data)
+
+```
+
+## 2 identify thresholds of 4 bins with an equal number of observations 
+```{r}
+# Use quantile to find thresholds for 4 bins with equal number of observations
+quantiles <- quantile(data$Gr_Liv_Area, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quantiles
+# Use quantile to find thresholds for 4 bins with equal number of observations
+quantiles <- quantile(data$Gr_Liv_Area, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quantiles
+
+
+```
+
+## 3 bin Gr_Liv_Area   
+```{r}
+# Create bins based on quantiles
+data$Gr_Liv_Area_bin <- cut(data$Gr_Liv_Area, breaks = quantiles, include.lowest = TRUE)
+
+# First six values of the binned variable
+head(data$Gr_Liv_Area_bin)
+
+# Data type of the binned variable
+class(data$Gr_Liv_Area_bin)
+
+```
+
+## 4 fit a regression model with an ordinal categorical predictor 
+```{r}
+# Fit a linear regression model with Gr_Liv_Area_bin as the predictor
+model <- lm(SalePrice ~ Gr_Liv_Area_bin, data = data)
+
+# Summary of the model
+summary(model)
+
+
+```
+
+## 5 calculate the mean of Sale Price for each value in Gr_Liv_Area_bin
+```{r}
+# Calculate the mean SalePrice for each bin
+means <- data %>%
+  group_by(Gr_Liv_Area_bin) %>%
+  summarise(mean_saleprice = mean(SalePrice, na.rm = TRUE))
+
+means
+
+# Group mean difference between category 2 and category 1
+means_diff_21 <- means$mean_saleprice[2] - means$mean_saleprice[1]
+
+# Group mean difference between category 3 and category 1
+means_diff_31 <- means$mean_saleprice[3] - means$mean_saleprice[1]
+
+# Group mean difference between category 4 and category 1
+means_diff_41 <- means$mean_saleprice[4] - means$mean_saleprice[1]
+
+means_diff_21
+means_diff_31
+means_diff_41
+
+
+```
+
+## 6 plot the mean of Sale Price for each value in Gr_Liv_Area_bin
+```{r}
+# Plot the means
+ggplot(means, aes(x = Gr_Liv_Area_bin, y = mean_saleprice)) +
+  geom_col() +
+  labs(title = "Mean Sale Price for each Gr_Liv_Area_bin",
+       x = "Gr_Liv_Area_bin",
+       y = "Mean Sale Price")
+
+
+```

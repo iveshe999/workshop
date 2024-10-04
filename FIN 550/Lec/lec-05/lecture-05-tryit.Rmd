@@ -1,0 +1,125 @@
+---
+title: "Lecture 5: Data visualization"
+output:
+  html_document:
+---
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE,eval=FALSE)
+```
+
+# Try it: load and inspect the data
+
+```{r, message=F}
+library(tidyverse)
+dataset <- read_csv("/Users/iveshe/Library/Mobile Documents/com~apple~CloudDocs/Term 1/FIN 550/Lec/lec-05/data_visualization.csv")
+nrow(dataset)
+head(dataset)
+```
+
+
+# Try it: summarize the data
+
+```{r block1,results=F}
+# Summary statistics: mean and sd of x and y; correlation between x and y; num obs
+dataset %>% 
+  summarize(mean(x), sd(x), mean(y), sd(y), cor(x,y), n()) %>% 
+  round(3)
+
+# What does the sign of the correlation value mean?
+# Try it: how many groups are there?
+# Try it: calculate summary statistics by group
+```
+
+
+
+# Try it: creating a blank plot object
+
+
+```{r b2, fig.show='hide'}
+# `ggplot(data = <your data frame>)`
+ggplot(data = dataset) 
+```
+
+```{r ref.label="b2", out.width = "40%", echo=F}
+ggplot(data = dataset) # `ggplot(data = <your data frame>)`
+```
+
+
+# Try it: make a simple plot of the data
+
+
+```{r b3, fig.show='hide'}
+
+# Simple plot, stored in `gg`
+gg <- ggplot(dataset) +
+  geom_point(aes(x=x, y=y))
+gg
+```
+```{r, eval=F}
+# Note: geoms inherit aes from ggplot()
+# This code creates the same plot
+gg <- ggplot(dataset, aes(x=x, y=y)) +
+  geom_point()
+gg
+```
+
+```{r}
+# Add color and transparency options
+gg <- ggplot(dataset, aes(x = x, y = y)) +
+geom_point(color="blue", alpha=0.1)
+gg
+```
+
+```{r}
+# Use the `geom_smooth` geom to calculate and
+# add a linear trendline
+# Note: we are adding to the existing gg object
+gg +
+geom_smooth(method = "lm",
+color = "orange", linewidth = 1.5)
+```
+
+```{r}
+g <- 4
+dataset %>%
+filter(group == g) %>%
+ggplot(aes(x = x, y = y)) +
+geom_point(color="blue")
+```
+
+```{r}
+dataset %>%
+ggplot(aes(x = x, y = y)) +
+geom_point(aes(color=as.factor(group)))
+```
+
+```{r}
+dataset %>%
+ggplot(aes(x = x, y = y)) +
+geom_point(aes(color=as.factor(group)))+
+facet_wrap( ~ group, ncol = 3)
+```
+
+```{r}
+dataset %>%
+ggplot(aes(x = x, y = y)) +
+geom_point(aes(color=as.factor(group)))+
+facet_wrap( ~ group, ncol = 3) +
+theme_void() +
+theme(legend.position = "none")
+```
+
+```{r}
+if (!require(datasauRus)) {
+install.packages("datasauRus")
+}
+library(datasauRus)
+datasaurus_dozen %>%
+ggplot(aes(x = x, y = y)) +
+geom_point(aes(color = dataset)) +
+facet_wrap( ~ dataset, ncol = 3) +
+theme_void() +
+theme(legend.position = "none")
+```
+

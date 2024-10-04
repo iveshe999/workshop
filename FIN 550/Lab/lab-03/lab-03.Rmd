@@ -1,0 +1,125 @@
+---
+title: "Lab 03 - Data Wrangling"
+author: Ives He
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: simplex
+    number_sections: false
+---
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+## 0 load the package 
+```{r}
+library(tidyverse)
+```
+
+## 1 create a tibble 
+
+```{r}
+# Load the data
+firm_data <- read_csv("https://raw.githubusercontent.com/PYHkkk/FIN-550/main/firm.csv")
+
+# First six rows
+head(firm_data)
+
+# Number of rows
+nrow(firm_data)
+
+# Number of columns
+ncol(firm_data)
+
+# Column names
+colnames(firm_data)
+```
+
+## 2 subset data 
+
+### 2.1 one column 
+```{r}
+# Selecting one column, e.g., 'TIC'
+firm_data %>% select(TIC)
+```
+
+### 2.2 three columns 
+```{r}
+# Selecting three columns, e.g., 'TIC', 'FYEAR', and 'NI'
+firm_data %>% select(TIC, FYEAR, NI)
+```
+
+### 2.3 four rows and three columns
+```{r}
+# Selecting first four rows and three columns
+firm_data %>% select(TIC, FYEAR, NI) %>% slice(1:4)
+```
+
+## 3 filter rows  
+
+### 3.1 observations that belong to AAPL in 2015 
+```{r}
+firm_data %>% filter(TIC == "AAPL" & FYEAR == 2015)
+```
+
+### 3.2 observations that have the minimum NI value 
+```{r}
+firm_data %>% filter(NI == min(NI, na.rm = TRUE))
+```
+
+### 3.3 select columns of observations that belong to AAPL in 2015   
+```{r}
+firm_data %>% filter(TIC == "AAPL" & FYEAR == 2015) %>% select(TIC, FYEAR, NI)
+```
+
+## 4 arrange rows 
+
+### 4.1 ascending order of NI
+```{r}
+firm_data %>% arrange(NI)
+```
+
+### 4.2 descending order of NI
+```{r}
+firm_data %>% arrange(desc(NI))
+```
+
+### 4.3 ascending order of TIC and FYEAR, and descending order of NI
+```{r}
+firm_data %>% arrange(TIC, FYEAR, desc(NI))
+```
+
+## 5 create new variables  
+
+### 5.1 return on assets 
+```{r}
+firm_data <- firm_data %>% mutate(ROA = NI / AT)
+firm_data
+```
+
+### 5.2 net income bin numbers  
+```{r}
+# step1: identify thresholds of 4 bins with an equal number of observations 
+ni_bins <- quantile(firm_data$NI, probs = seq(0, 1, length.out = 5), na.rm = TRUE)
+# step2: remove the names of a named vector  
+ni_bins <- unname(ni_bins)
+# step3: bin NI  
+firm_data <- firm_data %>% mutate(NI_bin = cut(NI, breaks = ni_bins, include.lowest = TRUE))
+firm_data
+```
+
+### 5.3 log of assets 
+```{r}
+firm_data <- firm_data %>% mutate(Log_AT = log(AT))
+firm_data
+```
+
+### 5.4 drop a column 
+```{r}
+firm_data <- firm_data %>% select(-Log_AT)
+firm_data
+```
+

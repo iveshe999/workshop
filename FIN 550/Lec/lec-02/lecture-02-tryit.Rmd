@@ -1,0 +1,174 @@
+---
+title: "Lecture 2: Introduction to R programming"
+output:
+  html_document:
+---
+
+
+
+# Try it: list/vector subsetting example
+
+- Open the R markdown file for this lecture (`lecture-02-tryit.Rmd`)
+
+- Execute the code below to create a vector and a list
+
+```{r}
+# Define an atomic vector
+x_vector = c(2, 4, 6, 8)
+
+# Define a named list
+x_list = list(Name = c("Riley", "League"), 
+              Subject = "FIN", Number = 550)
+x_list
+```
+
+
+
+- Use single brackets `[` to select one or more elements of a vector or list
+
+```{r, eval=FALSE}
+# Positive integers select elements in given positions
+x_vector[1]
+x_vector[c(1,4)]
+# Negative integers drop elements in given positions
+x_vector[-1]
+x_vector[c(-1,-4)]
+# Logical vectors select elements with a corresponding value of TRUE
+x_vector[c(TRUE, FALSE, FALSE, FALSE)]
+# When subsetting a list, `[` returns a list containing the selected elements
+x_list[1]
+
+```
+
+- Use double brackets `[[` or the dollar sign `$` to extract a single element
+
+```{r, eval=FALSE}
+# Positive integer extracts element in given position
+x_vector[[1]]
+# For named lists, can extract an element by name
+x_list[[1]]
+x_list[["Name"]]
+# Using `[[` on a list returns the selected element itself
+# Using `[` on a list returns a list with the selected element
+# Note: you can confirm this by using `typeof()`
+typeof(x_list[1])
+typeof(x_list[[1]])
+```
+
+
+# Try it: conditional statements (if, if/else)
+
+```{r, eval=F}
+# If
+if (3==2) {
+  print("Condition 1 is TRUE!")
+}
+
+# If/Else
+if (3==2) {
+  print("Condition 2 is TRUE!")
+} else {
+  print("Condition 2 is FALSE!")
+}
+```
+
+
+# Try it: for loops
+
+```{r, eval=F}
+
+my_vector <- c(2,4,6,8)
+for (item in my_vector) {
+  print(item)
+}
+
+```
+
+# Try it: functions
+
+```{r, eval=FALSE}
+# Create a function that adds two numbers
+add_numbers <- function(n1,n2) {
+  print(n1 + n2)
+}
+
+# Invoke the function, supply the two arguments it needs
+add_numbers(2,3)
+
+# Redefine function with default values for arguments
+add_numbers <- function(n1=5,n2=7) {
+  print(n1 + n2)
+}
+add_numbers()
+```
+
+# Try it: create a data frame from scratch
+
+- You can create a data frame from scratch using `data.frame()`
+
+```{r, eval=F}
+# People and birth country vectors, each of length 2
+person <- c("Ding Liren", "Viswanathan Anand")
+country <- c("China", "India")
+
+# Combine into a data frame
+X <- data.frame(Name = person, Birth_Country = country)
+```
+
+---
+
+# Try it: inspect the data frame
+
+```{r, eval=F}
+## Print the dataset
+X
+
+# X is an object with class “data.frame” and type "list"
+class(X)
+typeof(X)
+
+```
+
+---
+
+# Try it: subsetting a data frame
+
+- Data frames are lists and can be subset using list subsetting operators
+
+```{r, eval=F}
+# Extract the first row of the data frame
+X[1,]
+
+# Extract the first column of the data frame
+X[,1]
+X[[1]]
+
+# Data on people named "Viswanathan Anand"
+X[X$Name == "Viswanathan Anand"]
+
+# Extract the vector of birth countries
+X$Birth_Country
+```
+
+---
+
+# Read external data into a data frame
+
+- Large data sets often come stored in external databases or plain text files
+
+- `tidyverse` package includes functions to load most common formats into a data frame
+
+```{r, eval = FALSE}
+# Load package
+library(readr)
+
+# CSV "Comma Separated Values" Format
+path <- "https://raw.githubusercontent.com/googletrends/data/master/20160819_OlympicSportsByCountries.csv"
+trends <- read_csv(path, skip=2, n_max=100)
+
+# Display the first few rows
+head(trends)
+```
+
+
+

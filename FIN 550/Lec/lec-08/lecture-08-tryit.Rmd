@@ -1,0 +1,96 @@
+---
+title: "Lecture 8"
+---
+
+
+# Try it: load libraries, turn off scientific notation
+```{r, message=F}
+library(tidyverse)
+
+# scipen: a penalty for deciding whether to print fixed or exponential notation. 
+# Positive values encourage fixed notation, negative encourage scientific notation
+options(scipen=999)
+```
+
+---
+
+# Try it: simulated dataset of housing values
+
+```{r, message=F}
+set.seed(2) # Set seed for replicability when generating random variables
+
+# House ID (tibble, with 1000 obs)
+housing_sim <- tibble(id = 1:1000)
+
+# Number of rooms: use sample() to generate random integer between 2 and 7
+housing_sim <- housing_sim %>% 
+  mutate(rooms = sample(2:7, n(), replace = TRUE))
+
+# Square feet: use runif() to generate random value between 200 and 400
+housing_sim <- housing_sim %>% 
+  mutate(sqft = rooms*runif(n(), 200, 400))
+
+# error term: ranges from -5000 to 5000
+housing_sim <- housing_sim %>% 
+  mutate(error = 5000*runif(n(), -1, 1))
+```
+
+
+
+---
+
+# Try it: simulated dataset of housing values
+
+
+```{r b1, message=F, results=F}
+# Home values = A*sqft + B*sqft^2 + C*rooms + error
+housing_sim <- housing_sim %>% 
+  mutate(value = 300*sqft - 0.05*sqft^2 + 10000*rooms + error)
+head(housing_sim)
+summary(housing_sim$value)
+```
+
+
+---
+
+# Try it: univariate regression of values on sqft
+
+
+
+```{r, message=F, results=F}
+
+# Use lm() to regress housing values on sqft
+# How does coefficient on sqft compare to the true value of 300?
+```
+
+
+---
+
+# Try it: create new variable, sqft2, and add it to regression
+
+
+- Is the coefficient on `sqft` closer to the correct value? Why is it not exact?
+
+
+---
+
+# Try it: use poly() function to add sqft2 to the regression
+
+
+```{r b4, results = F}
+# raw=T specifies raw polynomials
+lm(value ~ poly(sqft, 2, raw = TRUE), data = housing_sim)
+```
+
+- Do you get the same answer as before?
+
+
+---
+
+# Try it: add rooms as a third predictor
+
+
+---
+
+# Try it: setting error term to zero
+

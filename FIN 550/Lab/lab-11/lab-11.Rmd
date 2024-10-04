@@ -1,0 +1,178 @@
+---
+title: "Lab 11 - Variable Selection"
+author: Ives He
+output:
+  html_document:
+---
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+
+## 1 Number of possible models
+```{r}
+# (a) How many possible models are there?
+total_models <- 2^22
+total_models
+# (b)	You consider using Best Subset Selection to choose a model. How many models will this procedure consider? 
+best_subset_models <- 2^22
+best_subset_models
+# (c) You consider using Forward Stepwise Selection.  How many models will this procedure consider?
+forward_stepwise_models <- (22 * (22 + 1)) / 2
+forward_stepwise_models
+```
+
+## 2 fit a multiple linear regression model
+
+Load the built-in Seatbelts dataset that was used in the lecture on Variable Selection. As in class, we will build a model of DriversKilled, and we will consider four possible predictors: law, PetrolPrice, kms, and kms2.
+
+```{r}
+# Load the dataset into a tibble. Keep the outcome variable and the predictors law, PetrolPrice, and kms. Create the variable kms2 = kms^2
+library(leaps)
+library(caret)
+library(dplyr)
+
+# Load the built-in Seatbelts dataset
+data("Seatbelts")
+
+# Convert it to a tibble and create kms2
+seatbelts <- as_tibble(Seatbelts)
+
+# Select the variables: law, PetrolPrice, kms, and create kms2
+seatbelts <- seatbelts %>%
+  select(DriversKilled, law, PetrolPrice, kms) %>%
+  mutate(kms2 = kms^2)
+
+# Check the first few rows to confirm the data
+head(seatbelts)
+
+
+```
+
+
+```{r}
+# (a) Best subset selection with 5-fold cross-validation
+set.seed(3)
+
+# Define predictors (X) and outcome (Y)
+x <- seatbelts %>% select(law, PetrolPrice, kms, kms2)
+y <- seatbelts$DriversKilled
+
+# Perform Best Subset Selection
+best_subset <- regsubsets(x = as.matrix(x), y = y, nbest = 1, nvmax = 4, method = "exhaustive")
+
+# 5-fold cross-validation using caret
+ctrl <- trainControl(method = "cv", number = 5)
+lm_model <- train(DriversKilled ~ law + PetrolPrice + kms + kms2, data = seatbelts, method = "lm", trControl = ctrl)
+
+# Show summary of the model
+summary(lm_model)
+
+
+```
+
+How does your answer compare to what we found in class?
+
+Both lab-11 and the classroom exercise using Best Subset Selection identified the model with law, PetrolPrice, and kms2 as the best fit. In lab-11, this model had an Adjusted R-squared of 0.19 and minimized the LOOCV MSE. Similarly, the classroom exercise found the model with these predictors yielded the lowest MSE (531.63), confirming that both approaches produced consistent results with the same optimal set of predictors.
+
+```{r}
+# (b) Forward Stepwise Selection with 5-fold cross-validation
+# Load required libraries
+library(caret)
+
+# Set seed for reproducibility
+set.seed(3)
+
+# Define the full and null models for forward stepwise selection
+full_model <- lm(DriversKilled ~ law + PetrolPrice + kms + kms2, data = seatbelts)
+null_model <- lm(DriversKilled ~ 1, data = seatbelts)  # Null model (no predictors)
+
+# Perform forward stepwise selection
+forward_step_model <- step(null_model, 
+                           scope = list(lower = null_model, upper = full_model),
+                           direction = "forward")
+
+# Show summary of the final forward stepwise selection model
+summary(forward_step_model)
+
+
+
+```
+
+How does your answer compare to what we found in class?
+
+In both lab-11 and the classroom exercise using Forward Stepwise Selection, the best model identified includes the predictors law, PetrolPrice, and kms2. In lab-11, this model had an Adjusted R-squared of 0.19 and was selected as optimal. Similarly, in class, the model with the lowest cross-validated mean-squared error (MSE = 531.63) also included law, PetrolPrice, and kms2, confirming consistent results across both analyses.
+
+```{r}
+# (c) Backward Stepwise Selection with LOOCV and 5-fold cross-validation
+set.seed(3)
+
+# Perform backward stepwise selection
+backward_step_model <- step(full_model, 
+                            direction = "backward")
+
+# Show summary of the final backward stepwise selection model
+summary(backward_step_model)
+
+
+```
+
+How do your answers compare to what you found in (a) and (b), and in class?
+
+Backward Stepwise Selection with both leave-one-out cross-validation (LOOCV) and 5-fold cross-validation yielded the same final model, retaining law, PetrolPrice, and kms2 as predictors. This model had an adjusted R-squared of 0.19 and an F-statistic of 15.93. Comparing to Best Subset Selection, which included all four variables (law, PetrolPrice, kms, and kms2), the backward selection performed better by eliminating the non-significant kms. Forward Stepwise Selection produced the same model as backward selection, making both stepwise methods more efficient and consistent than Best Subset Selection in this case.
+
+## 3 Bonus problem (optional) 
+```{r}
+# Redo problem 2(a), using algorithm 6.1 from ISLAR
+# Load required libraries
+library(leaps)
+library(caret)
+library(dplyr)
+
+# Check the column names of the Seatbelts dataset to confirm correct names
+colnames(Seatbelts)
+
+# Convert Seatbelts to a tibble and inspect the first few rows
+seatbelts <- as_tibble(Seatbelts)
+head(seatbelts)
+
+# Step 1: Select relevant columns and create kms2 (square of kms)
+# Explicitly using dplyr::select to avoid function masking issues
+seatbelts <- seatbelts %>%
+  dplyr::select(DriversKilled, law, PetrolPrice, kms) %>%  # Ensure correct columns
+  mutate(kms2 = kms^2)  # Create kms2 as the square of kms
+
+# Confirm the dataset structure
+head(seatbelts)
+
+# Step 2: Perform Best Subset Selection using regsubsets
+x <- seatbelts %>% dplyr::select(law, PetrolPrice, kms, kms2)  # Define predictors
+y <- seatbelts$DriversKilled  # Define outcome variable
+
+# Perform Best Subset Selection using the regsubsets function
+best_subset <- regsubsets(x = as.matrix(x), y = y, nbest = 1, nvmax = 4, method = "exhaustive")
+best_subset_summary <- summary(best_subset)
+
+# Step 3: Use R-squared to select the best model among models with the same number of predictors
+rsq_values <- best_subset_summary$rsq
+best_rsq_model_size <- which.max(rsq_values)  # Find the best model based on R-squared
+best_rsq_model_size  # Print the best model based on R-squared
+
+# Step 4: Use cross-validation to compare models with different numbers of predictors
+set.seed(3)
+cv_ctrl <- trainControl(method = "cv", number = 5)
+
+# Fit the model using cross-validation
+lm_cv_model <- train(DriversKilled ~ law + PetrolPrice + kms + kms2, 
+                     data = seatbelts, method = "lm", trControl = cv_ctrl)
+
+# Show summary of the cross-validated model
+summary(lm_cv_model)
+
+
+```
+
+How does your answer compare to 2(a)? What is the advantage of using algorithm 6.1?
+
+The results from 3 are identical to those from 2(a), with the same coefficients, R-squared values, and residuals. This suggests that both methods selected the same model. The advantage of using algorithm 6.1 is that it improves efficiency by using R-squared to compare models with the same number of predictors, reducing the need for cross-validation. Cross-validation is only used to compare models with different numbers of predictors, which helps to avoid overfitting and ensures a balance between model complexity and predictive accuracy.

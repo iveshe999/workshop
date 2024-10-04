@@ -1,0 +1,213 @@
+---
+title: "Lecture 10"
+subtitle: "Cross-validation"
+---
+
+
+
+# Try it: load libraries, turn off scientific notation
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+# scipen: a penalty for deciding whether to print fixed or exponential notation. 
+# Positive values encourage fixed notation, negative encourage scientific notation
+options(scipen=999)
+```
+
+```{r}
+summary(housing$MEDV)
+cat("\n")
+summary(housing$RM)
+```
+
+
+
+---
+
+# Try it: load and inspect the Boston housing dataset
+
+```{r, message=F}
+
+# Housing information for 506 areas around Boston
+housing <- read_csv("/Users/iveshe/Library/Mobile Documents/com~apple~CloudDocs/Term 1/FIN 550/Lec/lec-10/housing.csv")
+nrow(housing)
+ncol(housing)
+```
+---
+
+
+# Try it: validation set approach
+
+```{r}
+# Set seed for replicability (why)
+set.seed(1)
+n_rows <- nrow(housing)
+
+# Randomly select half the observations
+train <- sample(n_rows, n_rows/2)
+
+# RM degree 1
+# 1. Estimate model using training observation only by specifying `subset` option
+lm_1 <- lm(MEDV ~ RM, data = housing, subset = train)
+
+# 2. Calculate MSE using test data
+lm_1_mse <- mean((housing$MEDV - predict(lm_1, housing))[-train]^2)
+lm_1_mse
+```
+
+---
+
+# Try it: write the function
+
+```{r, eval=F}
+f_mse <- function(order=10, seed=NULL) {
+mse_lm <- rep(0,order)
+set.seed(seed)
+n_rows <- nrow(housing)
+train <- sample(n_rows, n_rows/2)
+for (j in 1:order){# Estimate training model where Y = MEDV and X = polynomial in rooms of order j
+lm <- lm(MEDV ~ poly(RM, j), data = housing, subset = train)
+# Calculate the MSE using test data (hint: look at code on previous slide)
+mse_lm[j] <- mean((housing$MEDV - predict(lm, housing))[-train]^2)
+}
+return(mse_lm)
+}
+```
+
+---
+
+```{r}
+# Confirm that we get the same results as previous slide (RM degree 1, 2, 3)
+f_mse(3,1)
+mse_1 <- f_mse(10, 891)
+mse_2 <- f_mse(10, 892)
+mse_3 <- f_mse(10, 893)
+mse_4 <- f_mse(10, 894)
+mse_5 <- f_mse(10, 895)
+# Build a data frame with the results
+mse <- data.frame(mse_1, mse_2, mse_3, mse_4, mse_5) %>%
+mutate(order = row_number())
+```
+
+
+# Try it: call the function using different seeds
+
+```{r, eval=F}
+# Confirm that we get the same results as previous slide (RM degree 1, 2, 3)
+f_mse(1,1)
+f_mse(2,1)
+f_mse(3,1)
+
+mse_1 <- f_mse(10, 891)
+mse_2 <- f_mse(10, 892)
+mse_3 <- f_mse(10, 893)
+mse_4 <- f_mse(10, 894)
+mse_5 <- f_mse(10, 895)
+
+# Build a data frame with the results
+mse <- data.frame(mse_1, mse_2, mse_3, mse_4, mse_5) %>% 
+  mutate(order = row_number())
+```
+
+---
+
+# Try it: plot our results
+
+
+```{r b7, results=F, fig.show="hide", eval=F}
+
+# Show MSE as a function of the polynomial degree
+#   for the 5 different seeds we tried
+ggplot(mse, aes(x=order)) + theme_bw() +
+  geom_line(aes(y = mse_1), color = "red") + 
+  geom_line(aes(y = mse_2), color = "blue") + 
+  geom_line(aes(y = mse_3), color = "green") + 
+  geom_line(aes(y = mse_4), color = "orange") + 
+  geom_line(aes(y = mse_5), color = "black") +
+  scale_x_continuous(breaks = c(1:10)) +
+  theme(
+    axis.title = element_text(size = 26),
+    axis.text = element_text(size = 20),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+```
+
+
+---
+
+
+```{r}
+library(boot)
+# Calculate LOOCV using cv.glm(), part of `boot` library
+# RM degree 1. No need to set a seed with LOOCV (why not?)
+glm_1 <- glm(MEDV ~ RM, data = housing)
+# GLM default is regression
+cv_err_1 <- cv.glm(housing, glm_1)
+# cv.glm default is LOOCV
+# Value of K (LOOCV is k-fold with k = n)
+cv_err_1$K
+# Cross-validation estimate of prediction error
+# We care about the first number: raw prediction error (not adjusted)
+cv_err_1$delta[1]
+```
+
+```{r}
+for (j in 1:12) {
+glm_j <- glm(MEDV ~ poly(RM,j), data = housing)
+cv_err_j <- cv.glm(housing, glm_j)$delta[1]
+print(paste("MSE for order",j,"is",cv_err_j))
+}
+```
+
+```{r}
+set.seed(1)
+## RM degree 1
+glm_1 <- glm(MEDV ~ RM, data = housing)
+# 10-fold cross-validation
+cv_err_k10_1 <- cv.glm(housing, glm_1, K = 10)
+cv_err_k10_1$K
+# Cross-validation estimate of prediction error
+cv_err_k10_1$delta[1]
+```
+
+```{r}
+for (j in 1:12) {
+glm_j <- glm(MEDV ~ poly(RM,j), data = housing)
+cv_err_j <- cv.glm(housing, glm_j, K=10)$delta[1]
+print(paste("MSE for order", j, "is", cv_err_j))
+}
+```
+
+```{r}
+set.seed(2)
+order <- 12
+mse_vs <- rep(0,order)
+mse_loocv <- rep(0,order)
+mse_k10 <- rep(0,order)
+for (j in 1:order) {
+train <- sample(n_rows, n_rows/2)
+lm_vs <- lm(MEDV ~ poly(RM,j), data = housing, subset = train)
+mse_vs[j] <- mean((housing$MEDV - predict(lm_vs, housing))[-train]^2)
+lm <- glm(MEDV ~ poly(RM,j), data = housing)
+mse_loocv[j] <- cv.glm(housing, lm)$delta[1]
+mse_k10[j] <- cv.glm(housing, lm, K = 10)$delta[1]
+} 
+```
+
+```{r}
+library(knitr)
+
+mat <- matrix(c(mse_vs, mse_loocv, mse_k10),
+nrow = order, ncol = 3)
+rownames(mat) <- paste("Degree", rep(1:order))
+colnames(mat) <- c("Valid. Set","LOOCV","k-fold")
+kable(mat, digits=1, align="c")
+```
+
+```{r}
+install.packages("knitr")
+
+```
+

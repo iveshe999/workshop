@@ -1,0 +1,106 @@
+---
+title: "Lecture 7: Linear regression"
+output:
+  html_document:
+---
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE,eval=FALSE)
+```
+
+# Load libraries, turn off scientific notation
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+# scipen: a penalty for deciding whether to print fixed or exponential notation. 
+# Positive values encourage fixed notation, negative encourage scientific notation
+options(scipen=999)
+```
+
+---
+
+
+# Load and inspect our data
+```{r, message=F}
+housing <- read_csv("/Users/iveshe/Library/Mobile Documents/com~apple~CloudDocs/Term 1/FIN 550/Lec/lec-07/ameshousing.csv")
+nrow(housing)
+names(housing)
+```
+
+```{r}
+summary(housing$SalePrice)
+summary(housing$Mo_Sold)
+```
+
+
+
+---
+
+# Try it: Model with a numeric (continuous) predictor 
+
+```{r}
+lm1 <- lm(SalePrice ~ 1, data = housing)
+# Outcome variable is SalePrice
+summary(lm1)
+```
+
+
+```{r lm2, eval=F}
+lm2 <- lm(SalePrice ~ Gr_Liv_Area, data = housing)
+summary(lm2)
+```
+
+```{r}
+# lm1 is a linear model "object"
+# Extract the value of the beta0 coefficient from this object
+lm1$coefficients
+```
+
+```{r}
+# Note: in this intercept model, the coefficient is just the mean
+mean(housing$SalePrice)
+```
+
+```{r}
+summary(housing$Gr_Liv_Area)
+```
+
+
+```{r}
+lm2 <- lm(SalePrice ~ Gr_Liv_Area, data = housing)
+summary(lm2)
+```
+
+---
+
+# Try it: scatter plot plus trendline
+
+```{r, eval=F }
+# Plot SalePrice (y-axis) vs Gr_Liv_Area (x-axis)
+# Make the scatterpoints red, with size=2
+ggplot(housing, aes(x = Gr_Liv_Area, y = SalePrice)) +
+geom_point(color="red", size=2) +
+geom_line(aes(x = Gr_Liv_Area, y = lm2$fitted.values),
+color="blue", linewidth=2)
+```
+
+```{r}
+table(housing$Season_Sold)
+```
+
+```{r}
+lm(SalePrice ~ as.factor(Season_Sold), data = housing)
+```
+
+```{r}
+housing %>%
+group_by(Season_Sold) %>%
+summarize(SalePrice_mean = mean(SalePrice))
+```
+
+
+
+
+
+

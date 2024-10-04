@@ -1,0 +1,177 @@
+---
+title: "Lecture 3: Data Wrangling"
+output:
+  html_document:
+---
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+# Creating a data frame in two steps
+
+```{r, eval=TRUE}
+# 1. Store executive names and salaries in vectors
+manager <- c("Timothy D. Cook", "D. Bruce Sewell")
+salary_in_thousand <- c(2000, 1000)
+
+# 2. Call `data.frame()` and specify the column names
+X <- data.frame(EXEC_FULLNAME = manager, SALARY = salary_in_thousand)
+print(X)
+```
+
+
+# Try it: join example
+
+```{r, eval=T}
+library(tidyverse)
+Y <- tibble(EXEC_FULLNAME = c("Timothy D. Cook", "D. Bruce Sewell"), 
+            SALARY =  c(2000, 1000))
+Z <- tibble(EXEC_FULLNAME = c("Timothy D. Cook", "Luca Maestri"), BONUS = c(0,0))
+print(Y)
+```
+
+```{r}
+left_join(Y, Z, by = "EXEC_FULLNAME")
+right_join(Y, Z, by = "EXEC_FULLNAME")
+inner_join(Y, Z, by = "EXEC_FULLNAME")
+full_join(Y, Z, by = "EXEC_FULLNAME")
+
+```
+
+
+# Try it: load and inspect the manager data
+
+- Is the variable EXECID a string (character) or a numeric?
+
+```{r, eval=F}
+# Load the data 
+df <- read_csv("/Users/iveshe/Library/Mobile Documents/com~apple~CloudDocs/Term 1/FIN 550/Lec/lec-03/manager.csv")
+
+
+# First six rows
+head(df)
+# Number of rows and columns
+dim(df)
+nrow(df)
+ncol(df)
+# Column names and variable types
+names(df)
+str(df)
+```
+
+```{r}
+# Select one column as a vector
+df$EXEC_FULLNAME
+df[['EXEC_FULLNAME']]
+df[[7]]
+# Select one column as a tibble
+df['EXEC_FULLNAME']
+df[7]
+df[,'EXEC_FULLNAME']
+df[,7]
+select(df,EXEC_FULLNAME)
+
+```
+
+```{r}
+# Select two columns
+df[,c("EXEC_FULLNAME","SALARY")]
+df[,c(7,9)]
+select(df, EXEC_FULLNAME, SALARY)
+# Select five rows and two columns
+df[c(1:5), c("EXEC_FULLNAME","SALARY")]
+df[c(1:5), c(7,9)]
+
+```
+
+```{r}
+# Find observations of AAPL executives in 2015. What kind of vector does this return?
+df$YEAR==2015 & df$TICKER=="AAPL"
+# Use that vector to select the observations of interest
+df[df$YEAR==2015 & df$TICKER=="AAPL",]
+filter(df,YEAR==2015, TICKER=="AAPL")
+```
+
+```{r}
+# Minimum salary
+min(df$SALARY)
+# What kind of vector does this return?
+df$SALARY==min(df$SALARY)
+# Use that vector to select the observations of interest
+df[df$SALARY==min(df$SALARY),]
+filter(df,SALARY==min(SALARY))
+```
+
+```{r}
+#Name and salary of executives of AAPL in 2015
+df[df$YEAR==2015 & df$TICKER=="AAPL", c("EXEC_FULLNAME","SALARY")]
+```
+
+```{r}
+# ascending order of TDC1 (total compensation, thousands of $)
+arrange(df,TDC1)
+```
+
+```{r}
+# descending order of TDC1
+arrange(df,desc(TDC1))
+```
+
+```{r}
+# ascending order of TICKER and YEAR, and descending order of TDC1
+arrange(df,TICKER, YEAR, desc(TDC1))
+```
+
+```{r}
+#display sorted df but do not modify
+arrange(df,TICKER, YEAR, desc(TDC1))
+# sort the df and save it
+df <- arrange(df,TICKER, YEAR, desc(TDC1))
+df
+```
+
+```{r}
+# Create new variable equal to salary plus bonus
+df$NEWVAR <- df$SALARY + df$BONUS
+head(df)
+```
+
+```{r}
+# use `seq()` to identify the 6 thresholds for forming 5 equal width bins
+bins <- seq(min(df$SALARY), max(df$SALARY), (max(df$SALARY) - min(df$SALARY))/5)
+bins
+```
+
+```{r}
+#bin SALARY
+df$SALARY_bin <- .bincode(df$SALARY, bins, include.lowest = TRUE)
+# use `table()` to display frequency counts of unique values
+table(df$SALARY_bin)
+```
+
+```{r}
+df$SALARY_cut <- cut(df$SALARY, 5)
+# frequency counts of unique values (compare to SALARY_bin)
+table(df$SALARY_cut)
+
+```
+
+
+```{r}
+# does not modify df
+mutate(df, SALARY_1000=SALARY*1000, BONUS_1000=BONUS*1000)
+head(df)
+# modifies df
+df <- mutate(df, SALARY_1000=SALARY*1000, BONUS_1000=BONUS*1000)
+head(df)
+# drop a column
+df$SALARY_1000 <- NULL
+head(df)
+
+```
+
+
+
+
+

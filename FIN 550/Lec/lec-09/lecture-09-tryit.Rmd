@@ -1,0 +1,88 @@
+---
+title: "Lecture 9"
+subtitle: "Logistic regression"
+---
+
+---
+
+
+# Try it: load libraries, turn off scientific notation
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+# scipen: a penalty for deciding whether to print fixed or exponential notation. 
+# Positive values encourage fixed notation, negative encourage scientific notation
+options(scipen=999)
+```
+
+
+---
+
+# Try it: load and inspect the personal loans dataset
+
+```{r, message=F}
+bank <- read_csv("UniversalBank.csv")
+nrow(bank)
+ncol(bank)
+```
+
+---
+
+# Try it: rename variable names that contain spaces
+
+<!-- Note: rename_with uses an anonymous function here (advanced topic). More info available here:
+https://coolbutuseless.github.io/2019/03/13/anonymous-functions-in-r-part-1/
+-->
+
+
+```{r}
+names(bank)
+cat("\n")
+bank <- rename_with(bank, ~ gsub(" ","_", .x)) #<<
+names(bank)
+```
+
+
+---
+
+# Try it: fit a logistic model of personal loans on income
+
+```{r b1, results=F}
+# family = "binomial" specifies the logit model
+glm(Personal_Loan ~ Income, data = bank, family = "binomial") 
+```
+
+
+---
+
+# Try it: prediction for customer with $100,000 income
+
+- Recall the probability transformation formula: 
+
+$$p(X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X)} }$$
+
+```{r, eval=F}
+logit <- glm(Personal_Loan ~ Income, data = bank, family = "binomial") 
+logit$coefficients
+
+# Use exp() to predict probability for person with $100,000 in income
+#   example: `exp(3)` = e^3
+# Remember: income is measured in thousands
+
+```
+
+
+---
+
+# Try it: prediction for a new customer with $0 income
+
+
+
+```{r, eval=F}
+xb <- 
+
+prob <- 
+print(paste("Predicted probability is:", round(prob,3) ))
+
+```
